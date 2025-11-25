@@ -1,0 +1,137 @@
+version: "3.7"
+
+services:
+  chatwoot_prosperfy_app:
+    image: SEU-USUARIO/chatwoot-prosperfy-rails:latest  ## SUBSTITUA SEU-USUARIO pelo seu username do Docker Hub
+    command: bundle exec rails s -p 3000 -b 0.0.0.0
+    entrypoint: docker/entrypoints/rails.sh
+    volumes:
+      - chatwoot_prosperfy_data:/app/storage
+      - chatwoot_prosperfy_public:/app/public
+    networks:
+      - network_public
+    environment:
+      - CHATWOOT_HUB_URL=https://wrpcorp.com.br#
+      - INSTALLATION_NAME=Chatwoot Prosperfy
+      - NODE_ENV=production
+      - RAILS_ENV=production
+      - INSTALLATION_ENV=docker
+      - SECRET_KEY_BASE=prosperfy789xyz321teste456abc789def012ghi345jkl  # DIFERENTE DO OFICIAL
+      - FRONTEND_URL=https://chat.prosperfy.com.br  # DOMÍNIO ATUALIZADO
+      - DEFAULT_LOCALE=pt_BR
+      - FORCE_SSL=true
+      - ENABLE_ACCOUNT_SIGNUP=false
+      - REDIS_URL=redis://redis:6379
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USERNAME=postgres
+      - POSTGRES_PASSWORD=4I4DQSbgGc08Z7
+      - POSTGRES_DATABASE=chatwoot_oficial  # MESMO BANCO DO OFICIAL
+      - ACTIVE_STORAGE_SERVICE=local
+      - RAILS_LOG_TO_STDOUT=true
+      - USE_INBOX_AVATAR_FOR_BOT=true
+      # Performance
+      - SIDEKIQ_CONCURRENCY=10
+      - RACK_TIMEOUT_SERVICE_TIMEOUT=0
+      - RAILS_MAX_THREADS=5
+      - WEB_CONCURRENCY=2
+      - ENABLE_RACK_ATTACK=false
+      # Servidor de Email
+      - MAILER_SENDER_EMAIL=Chatwoot Prosperfy <chatadmin@wrpcorp.com.br>
+      - SMTP_DOMAIN=hostinger.com
+      - SMTP_ADDRESS=smtp.hostinger.com
+      - SMTP_PORT=587
+      - SMTP_USERNAME=chatadmin@wrpcorp.com.br
+      - SMTP_PASSWORD=EuAdmin@991
+      - SMTP_AUTHENTICATION=login
+      - SMTP_ENABLE_STARTTLS_AUTO=true
+      - SMTP_OPENSSL_VERIFY_MODE=peer
+      - MAILER_INBOUND_EMAIL_DOMAIN=chatadmin@wrpcorp.com.br
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1024M
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.chatwoot_prosperfy_app.rule=Host(`chat.prosperfy.com.br`)
+        - traefik.http.routers.chatwoot_prosperfy_app.entrypoints=websecure
+        - traefik.http.routers.chatwoot_prosperfy_app.tls.certresolver=letsencryptresolver
+        - traefik.http.routers.chatwoot_prosperfy_app.priority=1
+        - traefik.http.routers.chatwoot_prosperfy_app.service=chatwoot_prosperfy_app
+        - traefik.http.services.chatwoot_prosperfy_app.loadbalancer.server.port=3000
+        - traefik.http.services.chatwoot_prosperfy_app.loadbalancer.passhostheader=true
+        - traefik.http.middlewares.sslheader_prosperfy.headers.customrequestheaders.X-Forwarded-Proto=https
+        - traefik.http.routers.chatwoot_prosperfy_app.middlewares=sslheader_prosperfy@docker
+
+  chatwoot_prosperfy_sidekiq:
+    image: SEU-USUARIO/chatwoot-prosperfy-rails:latest  ## SUBSTITUA SEU-USUARIO pelo seu username do Docker Hub
+    command: bundle exec sidekiq -C config/sidekiq.yml
+    volumes:
+      - chatwoot_prosperfy_data:/app/storage
+      - chatwoot_prosperfy_public:/app/public
+    networks:
+      - network_public
+    environment:
+      - CHATWOOT_HUB_URL=https://wrpcorp.com.br#
+      - INSTALLATION_NAME=Chatwoot Prosperfy
+      - NODE_ENV=production
+      - RAILS_ENV=production
+      - INSTALLATION_ENV=docker
+      - SECRET_KEY_BASE=prosperfy789xyz321teste456abc789def012ghi345jkl
+      - FRONTEND_URL=https://chat.prosperfy.com.br
+      - DEFAULT_LOCALE=pt_BR
+      - FORCE_SSL=true
+      - ENABLE_ACCOUNT_SIGNUP=false
+      - REDIS_URL=redis://redis:6379
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USERNAME=postgres
+      - POSTGRES_PASSWORD=4I4DQSbgGc08Z7
+      - POSTGRES_DATABASE=chatwoot_oficial  # MESMO BANCO DO OFICIAL
+      - ACTIVE_STORAGE_SERVICE=local
+      - RAILS_LOG_TO_STDOUT=true
+      - USE_INBOX_AVATAR_FOR_BOT=true
+      # Performance
+      - SIDEKIQ_CONCURRENCY=10
+      - RACK_TIMEOUT_SERVICE_TIMEOUT=0
+      - RAILS_MAX_THREADS=5
+      - WEB_CONCURRENCY=2
+      - ENABLE_RACK_ATTACK=false
+      # Servidor de Email
+      - MAILER_SENDER_EMAIL=Chatwoot Prosperfy <chatadmin@wrpcorp.com.br>
+      - SMTP_DOMAIN=hostinger.com
+      - SMTP_ADDRESS=smtp.hostinger.com
+      - SMTP_PORT=587
+      - SMTP_USERNAME=chatadmin@wrpcorp.com.br
+      - SMTP_PASSWORD=EuAdmin@991
+      - SMTP_AUTHENTICATION=login
+      - SMTP_ENABLE_STARTTLS_AUTO=true
+      - SMTP_OPENSSL_VERIFY_MODE=peer
+      - MAILER_INBOUND_EMAIL_DOMAIN=chatadmin@wrpcorp.com.br
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1024M
+
+volumes:
+  chatwoot_prosperfy_data:
+    name: chatwoot_prosperfy_data
+  chatwoot_prosperfy_public:
+    name: chatwoot_prosperfy_public
+
+networks:
+  network_public:
+    external: true
+    name: network_public

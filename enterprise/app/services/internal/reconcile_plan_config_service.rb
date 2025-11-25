@@ -1,5 +1,8 @@
 class Internal::ReconcilePlanConfigService
   def perform
+    # MODIFIED FOR DEVELOPMENT: Skip premium feature reconciliation to allow all features
+    return
+    
     remove_premium_config_reset_warning
     return if ChatwootHub.pricing_plan != 'community'
 
