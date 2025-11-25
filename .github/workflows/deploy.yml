@@ -3,7 +3,7 @@ name: Build and Deploy Chatwoot Prosperfy
 on:
   push:
     branches:
-      - main
+      - develop
   workflow_dispatch:  # Permite executar manualmente
 
 env:
@@ -84,7 +84,19 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Deploy to production via SSH
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Upload and configure docker-compose
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "docker-compose.production-prosperfy.yml"
+          target: ${{ secrets.STACK_PATH }}
+
+      - name: Replace username and deploy
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -92,6 +104,14 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             cd ${{ secrets.STACK_PATH }}
+            
+            # Substituir SEU-USUARIO pelo username real do Docker Hub
+            sed -i "s|SEU-USUARIO|${{ secrets.DOCKERHUB_USERNAME }}|g" docker-compose.production-prosperfy.yml
+            
+            # Login no Docker Hub
             docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
+            
+            # Deploy da stack
             docker stack deploy -c docker-compose.production-prosperfy.yml chatwoot-prosperfy --with-registry-auth
+            
             echo "✅ Deploy concluído com sucesso!"
