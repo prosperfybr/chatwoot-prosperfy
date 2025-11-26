@@ -63,6 +63,8 @@ jobs:
           context: .
           file: ./docker/dockerfiles/rails.Dockerfile
           push: true
+          build-args: |
+            BASE_IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/chatwoot:development
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}-rails:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}-rails:v4.8.0-custom
@@ -75,8 +77,8 @@ jobs:
           context: .
           file: ./docker/dockerfiles/vite.Dockerfile
           push: true
-          build-contexts: |
-            chatwoot:development=docker-image://${{ secrets.DOCKERHUB_USERNAME }}/chatwoot:development
+          build-args: |
+            BASE_IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/chatwoot:development
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}-vite:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}-vite:v4.8.0-custom
