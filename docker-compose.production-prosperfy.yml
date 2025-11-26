@@ -15,7 +15,7 @@ services:
       - NODE_ENV=production
       - RAILS_ENV=production
       - INSTALLATION_ENV=docker
-      - SECRET_KEY_BASE=prosperfy789xyz321teste456abc789def012ghi345jkl  # DIFERENTE DO OFICIAL
+      - SECRET_KEY_BASE=oficial789xyz321teste456abc789def012ghi345jkl  # MESMO DO OFICIAL para compatibilidade
       - FRONTEND_URL=https://chat.prosperfy.com.br  # DOMÍNIO ATUALIZADO
       - DEFAULT_LOCALE=pt_BR
       - FORCE_SSL=true
@@ -81,7 +81,7 @@ services:
       - NODE_ENV=production
       - RAILS_ENV=production
       - INSTALLATION_ENV=docker
-      - SECRET_KEY_BASE=prosperfy789xyz321teste456abc789def012ghi345jkl
+      - SECRET_KEY_BASE=oficial789xyz321teste456abc789def012ghi345jkl
       - FRONTEND_URL=https://chat.prosperfy.com.br
       - DEFAULT_LOCALE=pt_BR
       - FORCE_SSL=true
