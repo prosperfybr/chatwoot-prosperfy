@@ -57,8 +57,9 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: "docker-compose.production-prosperfy.yml"
+          source: "./docker-compose.production-prosperfy.yml"
           target: ${{ secrets.STACK_PATH }}
+          strip_components: 1
           overwrite: true
 
       - name: Replace Docker Hub username in compose file
