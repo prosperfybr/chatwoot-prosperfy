@@ -73,7 +73,6 @@ services:
     command: bundle exec sidekiq -C config/sidekiq.yml
     volumes:
       - chatwoot_prosperfy_data:/app/storage
-      - chatwoot_prosperfy_public:/app/public
     networks:
       - network_public
     environment:
