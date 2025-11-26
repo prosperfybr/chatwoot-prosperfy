@@ -11,24 +11,10 @@ env:
   IMAGE_NAME: chatwoot-prosperfy
 
 jobs:
-  check-deploy:
+  build:
+    name: Build Custom Image
     runs-on: ubuntu-latest
-    outputs:
-      should_deploy: ${{ steps.check.outputs.should_deploy }}
-    steps:
-      - name: Check if commit message contains 'Deploy'
-        id: check
-        run: |
-          if [[ "${{ github.event.head_commit.message }}" == *"Deploy"* ]] || [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "should_deploy=true" >> $GITHUB_OUTPUT
-          else
-            echo "should_deploy=false" >> $GITHUB_OUTPUT
-          fi
-
-  build-and-push:
-    needs: check-deploy
-    if: needs.check-deploy.outputs.should_deploy == 'true'
-    runs-on: ubuntu-latest
+    if: contains(github.event.head_commit.message, 'Deploy') || github.event_name == 'workflow_dispatch'
     
     steps:
       - name: Checkout code
@@ -43,81 +29,56 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push base image
+      - name: Build and push custom Chatwoot image
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./docker/Dockerfile
+          file: ./docker/dockerfiles/custom.Dockerfile
           push: true
-          build-args: |
-            RAILS_ENV=production
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/chatwoot:development
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}-base:latest
-          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}-base:buildcache
-          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}-base:buildcache,mode=max
-
-      - name: Build and push Rails image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./docker/dockerfiles/rails.Dockerfile
-          push: true
-          build-args: |
-            BASE_IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/chatwoot:development
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}-rails:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}-rails:v4.8.0-custom
           cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}-rails:buildcache
           cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}-rails:buildcache,mode=max
 
-      - name: Build and push Vite image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./docker/dockerfiles/vite.Dockerfile
-          push: true
-          build-args: |
-            BASE_IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/chatwoot:development
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}-vite:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}-vite:v4.8.0-custom
-          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}-vite:buildcache
-          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}-vite:buildcache,mode=max
-
   deploy:
-    needs: build-and-push
+    name: Deploy to Production
     runs-on: ubuntu-latest
+    needs: build
+    if: contains(github.event.head_commit.message, 'Deploy') || github.event_name == 'workflow_dispatch'
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Upload and configure docker-compose
-        uses: appleboy/scp-action@v0.1.7
+      - name: Upload docker-compose to server
+        uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
           source: "docker-compose.production-prosperfy.yml"
           target: ${{ secrets.STACK_PATH }}
+          overwrite: true
 
-      - name: Replace username and deploy
-        uses: appleboy/ssh-action@v1.0.0
+      - name: Replace Docker Hub username in compose file
+        uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             cd ${{ secrets.STACK_PATH }}
-            
-            # Substituir SEU-USUARIO pelo username real do Docker Hub
-            sed -i "s|SEU-USUARIO|${{ secrets.DOCKERHUB_USERNAME }}|g" docker-compose.production-prosperfy.yml
-            
-            # Login no Docker Hub
-            docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
-            
-            # Deploy da stack
+            sed -i 's/SEU-USUARIO/${{ secrets.DOCKERHUB_USERNAME }}/g' docker-compose.production-prosperfy.yml
+
+      - name: Deploy to Docker Swarm
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd ${{ secrets.STACK_PATH }}
             docker stack deploy -c docker-compose.production-prosperfy.yml chatwoot-prosperfy --with-registry-auth
             
             echo "✅ Deploy concluído com sucesso!"
