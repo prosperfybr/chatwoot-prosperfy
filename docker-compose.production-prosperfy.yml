@@ -7,7 +7,6 @@ services:
     entrypoint: docker/entrypoints/rails.sh
     volumes:
       - chatwoot_prosperfy_data:/app/storage
-      - chatwoot_prosperfy_public:/app/public
     networks:
       - network_public
     environment:
@@ -129,8 +128,6 @@ services:
 volumes:
   chatwoot_prosperfy_data:
     name: chatwoot_prosperfy_data
-  chatwoot_prosperfy_public:
-    name: chatwoot_prosperfy_public
 
 networks:
   network_public:
