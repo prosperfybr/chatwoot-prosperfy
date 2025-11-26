@@ -128,6 +128,7 @@ services:
   chatwoot_prosperfy_vite:
     image: SEU-USUARIO/chatwoot-prosperfy-vite:latest  ## SUBSTITUA SEU-USUARIO pelo seu username do Docker Hub
     entrypoint: docker/entrypoints/vite.sh
+    command: bin/vite dev
     volumes:
       - chatwoot_prosperfy_data:/app/storage
       - chatwoot_prosperfy_public:/app/public
