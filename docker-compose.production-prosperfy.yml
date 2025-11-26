@@ -36,6 +36,9 @@ services:
       - RAILS_MAX_THREADS=5
       - WEB_CONCURRENCY=2
       - ENABLE_RACK_ATTACK=false
+      # Vite Configuration
+      - VITE_RUBY_HOST=chatwoot_prosperfy_vite
+      - VITE_RUBY_PORT=3036
       # Servidor de Email
       - MAILER_SENDER_EMAIL=Chatwoot Prosperfy <chatadmin@wrpcorp.com.br>
       - SMTP_DOMAIN=hostinger.com
