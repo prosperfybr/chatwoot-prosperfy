@@ -50,8 +50,7 @@ jobs:
           file: ./docker/Dockerfile
           push: true
           build-args: |
-            RAILS_ENV=development
-            BUNDLE_WITHOUT=
+            RAILS_ENV=production
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/chatwoot:development
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}-base:latest
@@ -64,8 +63,6 @@ jobs:
           context: .
           file: ./docker/dockerfiles/rails.Dockerfile
           push: true
-          build-contexts: |
-            chatwoot:development=docker-image://${{ secrets.DOCKERHUB_USERNAME }}/chatwoot:development
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}-rails:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}-rails:v4.8.0-custom
